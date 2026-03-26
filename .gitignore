@@ -3,7 +3,6 @@ data/**/*
 backup/*
 
 # Eccezioni: NON ignorare i file .gitkeep (senza spazi!)
-!**/ .gitkeep
 !**/.gitkeep
 
 # Resto delle esclusioni
