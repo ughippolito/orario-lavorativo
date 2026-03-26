@@ -1,0 +1,14 @@
+# Ignora tutto il contenuto della cartella data e sottocartelle
+data/**/*
+
+# Ma NON ignorare i file .gitkeep (permette di caricare la struttura)
+!**/ .gitkeep
+
+# Ignora tutto il contenuto della cartella backup
+backup/*
+
+# Ma NON ignorare il file .gitkeep
+!backup/.gitkeep
+
+# Resto delle esclusioni
+node_modules/
