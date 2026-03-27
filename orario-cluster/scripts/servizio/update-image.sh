@@ -20,7 +20,4 @@ echo ""
 echo "☁️ 3. Push dell'immagine su Docker Hub..."
 # Nota: Assicurati di aver fatto 'docker login' una volta manualmente sul terminale
 docker push $REMOTE_IMAGE
-
 echo ""
-echo "🚚 4. Caricamento immagine nel cluster k3d (opzionale ma veloce)..."
-k3d image import $REMOTE_IMAGE -c $CLUSTER_NAME

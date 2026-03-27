@@ -33,7 +33,6 @@ kubectl taint nodes k3d-orario-cluster-server-0 node-role.kubernetes.io/control-
 kubectl label nodes k3d-orario-cluster-agent-0 node-role.kubernetes.io/worker=worker --overwrite
 kubectl label nodes k3d-orario-cluster-agent-1 node-role.kubernetes.io/worker=worker --overwrite
 echo ""
-$SCRIPTS_DIR/update-image.sh
 echo "📄 Applico manifest applicazione..."
 cd $K8S_APP_DIR
 kubectl apply -f .
