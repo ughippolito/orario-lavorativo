@@ -25,6 +25,9 @@ docker tag $LOCAL_IMAGE $REMOTE_IMAGE
 echo "☁️ 3. Push su Docker Hub..."
 docker push $REMOTE_IMAGE
 
+echo "📂 Mi sposto nella root del repo: $REPO_ROOT"
+cd "$REPO_ROOT"
+
 # --- LOGICA GITHUB ---
 echo "📖 4. Controllo modifiche Git..."
 
