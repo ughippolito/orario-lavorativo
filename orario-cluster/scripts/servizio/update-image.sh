@@ -3,14 +3,14 @@ set -e
 
 # --- CONFIGURAZIONE ---
 # 1. Usa il percorso assoluto della ROOT del tuo repository
-REPO_ROOT="/home/uaippolito/orario_lavorativo/orario-cluster"
+REPO_ROOT="/home/uaippolito/orario_lavorativo"
 APP_NAME="workhours-frontend"
 LOCAL_IMAGE="workhours-frontend:latest"
 REMOTE_IMAGE="ughippo/gestione-orario:latest"
 
 # 2. Percorsi file (relativi alla REPO_ROOT)
-DOCKERFILE="$REPO_ROOT/file/Dockerfile"
-CONTEXT="$REPO_ROOT/file"
+DOCKERFILE="$REPO_ROOT/orario-cluster/file/Dockerfile"
+CONTEXT="$REPO_ROOT/orario-cluster/file"
 
 echo "📂 Entro nella directory del repository..."
 cd "$REPO_ROOT"
