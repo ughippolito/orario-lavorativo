@@ -99,11 +99,16 @@
         }
 
         .header-datetime-container .time {
-            font-size: 1.5rem;
-            font-weight: 800;
+            font-size: 1.6rem;
+            font-weight: 700;
             color: var(--primary);
         }
 		
+		.date-display {
+            font-size: 1.6rem; 
+            font-weight: 700;
+            color: var(--text);
+        }
 
         .page {
             display: flex;
@@ -394,9 +399,9 @@
                             <th id="th-sede" data-label="Sede" onclick="sortBy('sede')" style="cursor:pointer">Sede ↕</th>
                             <th id="th-entrata" data-label="Entrata" onclick="sortBy('entrata')" style="cursor:pointer">Entrata ↕</th>
                             <th id="th-uscita" data-label="Uscita" onclick="sortBy('uscita')" style="cursor:pointer">Uscita ↕</th>
-                            <th id="th-presenza" data-label="Presenza" onclick="sortBy('presenza')" style="cursor:pointer">Presenza (h) ↕</th>
+                            <th id="th-presenza" data-label="Presenza" onclick="sortBy('presenza')" style="cursor:pointer">Presenza ( hh : mm) ↕</th>
                             <th id="th-uscita-prev" data-label="Uscita Prevista" onclick="sortBy('uscita_teorica')" style="cursor:pointer">Uscita Prevista ↕</th>
-                            <th id="th-diff" data-label="Diff" onclick="sortBy('diff')" style="cursor:pointer">Diff (h) ↕</th>
+                            <th id="th-diff" data-label="Diff" onclick="sortBy('diff')" style="cursor:pointer">Diff ( hh : mm ) ↕</th>
                             <th>Note</th>
                             <th>Azioni</th>
                         </tr>
@@ -678,56 +683,81 @@
         }
 
         function updateSummaryCounters() {
-        let minutiPresenzaTotali = 0;
-        let minutiDifferenzaTotale = 0;
-        let r_c = 0, s_c = 0, a_c = 0;
-       
-        // Recuperiamo l'orario di lavoro impostato (es. 8h 06m = 486 min)
-        const workdayMin = getWorkdayMin(); 
-       
-        if (Array.isArray(orderedRecords)) {
-            orderedRecords.forEach(r => {
-                const e = toMin(r.entrata);
-                const u = toMin(r.uscita);
-       
-                if (r.sede !== 'Assenza' && e !== null) {
-                    // 1. Calcolo Presenza Effettiva
-                    if (u !== null) {
-                        minutiPresenzaTotali += (u - e);
+            let minutiPresenzaTotali = 0;
+            let minutiDifferenzaTotale = 0;
+            let r_c = 0, s_c = 0, a_c = 0;
+        
+            const workdayMin = getWorkdayMin(); 
+        
+            if (Array.isArray(orderedRecords)) {
+                orderedRecords.forEach(r => {
+                    const e = toMin(r.entrata);
+                    const u = toMin(r.uscita);
+        
+                    if (r.sede !== 'Assenza' && e !== null) {
+                        if (u !== null) {
+                            minutiPresenzaTotali += (u - e);
+                        }
+        
+                        const baseMin = e < 480 ? 480 : e;
+                        const utDinamica = baseMin + workdayMin;
+        
+                        if (u !== null) {
+                            minutiDifferenzaTotale += (u - utDinamica);
+                        }
                     }
-       
-                    // 2. Calcolo Differenza Dinamica
-                    // Usiamo la logica: base 08:00 (480 min) + orario lavorativo configurato
-                    const baseMin = e < 480 ? 480 : e;
-                    const utDinamica = baseMin + workdayMin;
-       
-                    if (u !== null) {
-                        minutiDifferenzaTotale += (u - utDinamica);
-                    }
-                }
-       
-                // Conteggi sedi
-                if(r.sede === 'In Sede' || r.sede === 'Fuori Sede') r_c++;
-                if(r.sede === 'Smart Working') s_c++;
-                if(r.sede === 'Assenza') a_c++;
-            });
-        }
-
+        
+                    if(r.sede === 'In Sede' || r.sede === 'Fuori Sede') r_c++;
+                    if(r.sede === 'Smart Working') s_c++;
+                    if(r.sede === 'Assenza') a_c++;
+                });
+            }
+        
+            // --- LOGICA PRESENZA: xgg yhh zmm ---
+            const ggP = Math.floor(minutiPresenzaTotali / workdayMin);
+            const restoP = minutiPresenzaTotali % workdayMin;
+            const hhP = Math.floor(restoP / 60);
+            const mmP = restoP % 60;
+            const stringaPresenza = `${ggP}gg ${String(hhP).padStart(2, '0')}hh ${String(mmP).padStart(2, '0')}mm`;
+        
+            // --- LOGICA DIFFERENZA (con gestione segno +/-): xgg yhh zmm ---
+            const isNegativo = minutiDifferenzaTotale < 0;
+            const absDiff = Math.abs(minutiDifferenzaTotale);
+            
+            const ggD = Math.floor(absDiff / workdayMin);
+            const restoD = absDiff % workdayMin;
+            const hhD = Math.floor(restoD / 60);
+            const mmD = restoD % 60;
+        
+            const segno = isNegativo ? "-" : "";
+            const stringaDiff = `${segno}${ggD}gg ${String(hhD).padStart(2, '0')}hh ${String(mmD).padStart(2, '0')}mm`;
+        
             // Aggiornamento UI
             document.getElementById('tot-giornate').textContent = orderedRecords.length;
-            document.getElementById('ore-presenza').textContent = fromMin(minutiPresenzaTotali);
+            document.getElementById('ore-presenza').textContent = stringaPresenza;
             
             const elDiff = document.getElementById('diff-totale');
-            elDiff.textContent = fromMin(minutiDifferenzaTotale);
-            
-            // Gestione colore (rosso se negativo, verde/standard se positivo)
-            elDiff.classList.toggle('summary-danger', minutiDifferenzaTotale < 0);
+            elDiff.textContent = stringaDiff;
+            elDiff.classList.toggle('summary-danger', isNegativo);
         
-            const obiettivoRientri = parseInt(document.getElementById('filter-rientri-mensili').value) || 4;
+            // --- LOGICA OBIETTIVO RIENTRI DINAMICO ---
+            const rientriBaseMensili = parseInt(document.getElementById('filter-rientri-mensili').value) || 4;
+            let obiettivoDinamico = rientriBaseMensili;
+            const ora = new Date();
+        
+            if (filterMode === 'archivio') {
+                obiettivoDinamico = rientriBaseMensili * 12;
+            } else if (filterMode === 'anno') {
+                const mesiPassati = ora.getMonth() + 1;
+                obiettivoDinamico = rientriBaseMensili * mesiPassati;
+            } else {
+                obiettivoDinamico = rientriBaseMensili;
+            }
+        
             const elRientri = document.getElementById('rientri');
-            elRientri.textContent = `${r_c}/${obiettivoRientri}`;
-            elRientri.classList.toggle('summary-danger', r_c < obiettivoRientri);
-            
+            elRientri.textContent = `${r_c}/${obiettivoDinamico}`;
+            elRientri.classList.toggle('summary-danger', r_c < obiettivoDinamico);
+        
             document.getElementById('smart-count').textContent = s_c;
             document.getElementById('assenze-count').textContent = a_c;
         }
