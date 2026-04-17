@@ -22,8 +22,7 @@ else
   echo "✔  Nessun container k3d attivo."
 fi
 echo ""
-echo "Riepilogo:"
-kubectl get nodes 2>/dev/null || echo "(Cluster fermo)"
+kubectl get nodes 2>/dev/null || echo "Cluster Fermo"
 echo ""
 echo "==== 🟢 Arresto completato. ===="
 echo ""

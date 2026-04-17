@@ -3,7 +3,7 @@ kind: Simple
 metadata:
   name: orario-cluster
 
-image: rancher/k3s:latest
+image: rancher/k3s:v1.34.3-k3s1
 
 servers: 1
 agents: 2

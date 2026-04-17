@@ -16,9 +16,7 @@ k3d cluster delete "$CLUSTER_NAME" >/dev/null 2>&1 || true
 echo "✔  Cluster esistemte rimosso ..."
 echo ""
 echo "🚀 Creo cluster..."
-envsubst < "$K3D_CONFIG/k3d-orario.yaml" > /tmp/k3d-config-resolved.yaml
-k3d cluster create --config /tmp/k3d-config-resolved.yaml
-#k3d cluster create --config "$K3D_CONFIG/k3d-orario.yaml"
+k3d cluster create --config "$K3D_CONFIG/k3d-orario.yaml"
 echo ""
 echo "⏳ Attendo API server..."
 until kubectl get --raw=/healthz >/dev/null 2>&1; do
@@ -28,7 +26,7 @@ done
 echo "✔  API server pronto!"
 echo ""
 echo "🚀 Creo il namespace " $NAMESPACE 
-##kubectl create namespace $NAMESPACE
+kubectl create namespace $NAMESPACE
 echo ""
 echo "🏷 Applico label e taint..."
 kubectl taint nodes k3d-orario-cluster-server-0 node-role.kubernetes.io/control-plane=:NoSchedule --overwrite

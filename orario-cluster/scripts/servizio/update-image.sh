@@ -1,28 +1,53 @@
 #!/bin/bash
-set -e # <--- Aggiungi questo: se il build fallisce, lo script si ferma subito!
+set -e 
 
+# --- CONFIGURAZIONE ---
+# 1. Usa il percorso assoluto della ROOT del tuo repository
+REPO_ROOT="/home/uaippolito/orario_lavorativo/orario-cluster"
 APP_NAME="workhours-frontend"
 LOCAL_IMAGE="workhours-frontend:latest"
-REMOTE_IMAGE="ughippo/gestione-orario:latest" # Il tuo repository Docker Hub
-CLUSTER_NAME="orario-cluster"
-DOCKERFILE="$INSTALL_DIR/orario_lavorativo/orario-cluster/file/Dockerfile"
-CONTEXT="$INSTALL_DIR/orario_lavorativo/orario-cluster/file"
+REMOTE_IMAGE="ughippo/gestione-orario:latest"
 
-echo ""
+# 2. Percorsi file (relativi alla REPO_ROOT)
+DOCKERFILE="$REPO_ROOT/file/Dockerfile"
+CONTEXT="$REPO_ROOT/file"
+
+echo "📂 Entro nella directory del repository..."
+cd "$REPO_ROOT"
+
+# --- LOGICA DOCKER ---
 echo "🔧 1. Build dell'immagine Docker locale..."
 docker buildx build --no-cache --load -f "$DOCKERFILE" -t $LOCAL_IMAGE "$CONTEXT"
 
-echo ""
-echo "🏷️ 2. Tagging dell'immagine per Docker Hub..."
+echo "🏷️ 2. Tagging immagine..."
 docker tag $LOCAL_IMAGE $REMOTE_IMAGE
 
-echo ""
-echo "☁️ 3. Push dell'immagine su Docker Hub..."
-# Nota: Assicurati di aver fatto 'docker login' una volta manualmente sul terminale
+echo "☁️ 3. Push su Docker Hub..."
 docker push $REMOTE_IMAGE
-echo ""
-echo " 4. Push delle modifiche su Git Hub..."
+
+# --- LOGICA GITHUB ---
+echo "📖 4. Controllo modifiche Git..."
+
+# Aggiungiamo i file per vedere se c'è qualcosa di nuovo
 git add .
-git commit -m "Update Image"
-git push origin main --force > /dev/null 2>&1
+
+# Verifichiamo se ci sono modifiche effettive da committare
+if git diff-index --quiet HEAD --; then
+    echo "⚠️ Nessuna modifica rilevata nei file. Git skip."
+else
+    echo "🚀 Modifiche rilevate. Eseguo commit e push..."
+    
+    # Configurazione utente locale (opzionale se già fatta globalmente)
+    git config user.email "ughippo@example.com"
+    git config user.name "ughippo"
+
+    git commit -m "Update Image: $(date +'%Y-%m-%d %H:%M:%S')"
+    
+    # Se hai configurato il Token come ti ho suggerito prima, 
+    # questo comando non chiederà password.
+    git push origin main --force
+    echo "✅ GitHub aggiornato!"
+fi
+
 echo ""
+echo "✨ Operazione completata con successo!"

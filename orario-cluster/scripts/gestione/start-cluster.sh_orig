@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euo pipefail
+
+CLUSTER_NAME="orario-cluster"
+
+echo ""
+echo "🧹 Stop eventuale cluster $CLUSTER_NAME..."
+k3d cluster stop "$CLUSTER_NAME"
+
+echo ""
+echo "🚀 Avvio cluster k3d: $CLUSTER_NAME"
+if ! k3d cluster start "$CLUSTER_NAME"; then
+    echo "❌ Errore durante l'invocazione di k3d"
+    exit 1
+fi
+
+echo""
+echo "🔄 Aggiornamento configurazione kubeconfig..."
+k3d kubeconfig merge "$CLUSTER_NAME" --kubeconfig-switch-context --kubeconfig-merge-default
+
+echo ""
+echo "⏳ Attendo API server..."
+ATTEMPTS=0
+MAX_ATTEMPTS=30
+until kubectl get --raw=/healthz >/dev/null 2>&1; do
+    ((ATTEMPTS++))
+    if [[ $ATTEMPTS -gt $MAX_ATTEMPTS ]]; then
+        echo "❌ Timeout: API server non risponde"
+        exit 1
+    fi
+    echo -n "." # Feedback visivo
+    sleep 2
+done
+
+echo ""
+echo -e "\n✔ API server pronto!"
+
+# Invece di stoppare/riavviare i nodi manualmente (che crea casini con gli IP),
+# aspettiamo semplicemente che diventino Ready.
+echo ""
+echo "⏳ Attendo che tutti i nodi siano Ready..."
+kubectl wait --for=condition=Ready nodes --all --timeout=60s
+
+echo ""
+echo "🎉 Cluster avviato correttamente!"
+echo ""
